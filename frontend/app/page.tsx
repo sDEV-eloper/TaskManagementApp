@@ -1,38 +1,37 @@
 'use client'
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { checkAuth, logout } from '@/redux/slices/authSlice';
+import { checkAuth } from '@/redux/slices/authSlice';
 import { RootState } from '@/redux/store';
+import KanbanBoard from './components/KanbanBoard';
 
 const Home = () => {
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const dispatch = useDispatch();
   const router = useRouter();
 
   useEffect(() => {
-    dispatch(checkAuth());
-  }, [dispatch]);
+    const token = localStorage.getItem('token');
+    const email = localStorage.getItem('email');
 
-  useEffect(() => {
-    if (!isLoggedIn) {
+    if (token && email) {
+      dispatch(checkAuth());
+    } else {
       router.push('/login');
     }
-  }, [isLoggedIn, router]);
+    setCheckingAuth(false);
+  }, [dispatch, router]);
 
-  const handleLogout = () => {
-    dispatch(logout());
-  };
-
-  if (!isLoggedIn) {
-    return null;
+  if (checkingAuth) {
+    return <div>Loading...</div>; // Show a loading indicator while checking authentication
   }
 
   return (
     <div>
-      <h1>Home Page</h1>
-      <button onClick={handleLogout}>Logout</button>
+      {isLoggedIn ? <KanbanBoard /> : null}
     </div>
   );
 };

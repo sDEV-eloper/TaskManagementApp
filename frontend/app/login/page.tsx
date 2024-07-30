@@ -21,6 +21,7 @@ const Login = () => {
       });
 
       const data = res.data;
+      console.log("data--", data)
       dispatch(login(data));
       router.push('/');
     } catch (error) {
