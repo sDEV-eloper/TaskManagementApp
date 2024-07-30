@@ -1,38 +1,81 @@
 import React, { useState, useEffect } from 'react';
 import TaskCard from './TaskCard';
 import TaskModal from './TaskModal';
-import axios from 'axios';
 import { logout } from '@/redux/slices/authSlice';
 import { useDispatch } from 'react-redux';
+import axios from 'axios';
 
 const KanbanBoard: React.FC = () => {
-  const [tasks, setTasks] = useState<any>({ todo: [], inProgress: [], underReview: [], finished: [] });
+
+
+  //   {
+  //     _id: '1',
+  //     title: 'Task 1',
+  //     description: 'Description for Task 1 ajldfk aslkd;fj a;lsdkjf ;lasd f',
+  //     status: 'todo',
+  //     priority: 'Urgent',
+  //     deadline: '2024-08-01'
+  //   },
+  //   {
+  //     _id: '1.1',
+  //     title: 'Task 1.1',
+  //     description: 'Description for Task 1.1 ajldfk aslkd;fj a;lsdkjf ;lasd f',
+  //     status: 'todo',
+  //     priority: 'Medium',
+  //     deadline: '2024-08-01'
+  //   },
+  //   {
+  //     _id: '2',
+  //     title: 'Task 2',
+  //     description: 'Description for Task 2',
+  //     status: 'inProgress',
+  //     priority: 'Medium',
+  //     deadline: '2024-08-02'
+  //   },
+  //   {
+  //     _id: '3',
+  //     title: 'Task 3',
+  //     description: 'Description for Task 3',
+  //     status: 'underReview',
+  //     priority: 'Low',
+  //     deadline: '2024-08-03'
+  //   },
+  //   {
+  //     _id: '4',
+  //     title: 'Task 4',
+  //     description: 'Description for Task 4',
+  //     status: 'finished',
+  //     priority: 'Low',
+  //     deadline: '2024-08-03'
+  //   }
+  // ]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentTask, setCurrentTask] = useState<any | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const email = localStorage.getItem('email');
+  const dispatch = useDispatch();
+const [tasks, setTasks]=useState<any[]>([])
+  const fetchTasks = async () => {
+    const token = localStorage.getItem('token'); 
 
-  const dispatch=useDispatch()
+    await axios.get('http://localhost:3001/api/tasks', {
+      headers: {
+        Authorization: `Bearer ${token}`, 
+      },
+    })
+    .then(response => {
+      console.log(response.data);
+      setTasks(response.data);
+    })
+    .catch(error => {
+      console.log("Axios Err: ", error);
+    });
+  };
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await axios.get('http://localhost:3001/api/tasks/');
-        const fetchedTasks = response.data;
-        console.log({ fetchedTasks });
-
-        const groupedTasks = fetchedTasks.reduce((acc: any, task: any) => {
-          acc[task.status] = [...(acc[task.status] || []), task];
-          return acc;
-        }, {});
-        setTasks(groupedTasks);
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-      }
-    };
-
     fetchTasks();
   }, []);
+
 
   const openModal = (task?: any) => {
     setCurrentTask(task || null);
@@ -48,27 +91,23 @@ const KanbanBoard: React.FC = () => {
 
   const handleTaskUpdate = async (task: any) => {
     try {
-      if (isEditing && currentTask) {
-        await axios.put(`http://localhost:3001/api/tasks/${currentTask._id}`, task);
-      } else {
-        await axios.post('http://localhost:3001/api/tasks/', task);
-      }
+      // Handle task update logic here
+      console.log('Task updated:', task);
       closeModal();
-      // Refresh tasks
-      const response = await axios.get('http://localhost:3001/api/tasks/');
-      const fetchedTasks = response.data;
-      const groupedTasks = fetchedTasks.reduce((acc: any, task: any) => {
-        acc[task.status] = [...(acc[task.status] || []), task];
-        return acc;
-      }, {});
-      setTasks(groupedTasks);
+      // Update the tasks state with the new or updated task
     } catch (error) {
       console.error('Error updating task:', error);
     }
   };
+
   const handleLogout = () => {
     dispatch(logout());
   };
+
+  const groupedTasks = tasks.reduce((acc: any, task: any) => {
+    acc[task.status] = [...(acc[task.status] || []), task];
+    return acc;
+  }, {});
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -77,7 +116,7 @@ const KanbanBoard: React.FC = () => {
           <div className="rounded-full bg-gray-200 h-10 w-10 flex items-center justify-center mr-2">
             <span className="text-gray-600">JG</span>
           </div>
-          <div className=''>
+          <div>
             <p className="text-gray-800 font-semibold">{email}</p>
           </div>
         </div>
@@ -100,7 +139,7 @@ const KanbanBoard: React.FC = () => {
             </li>
           </ul>
         </nav>
-        <button className="mt-auto bg-purple-600 text-white py-2 rounded-lg">Create new task</button>
+        <button className="mt-auto bg-purple-600 text-white py-2 rounded-lg" onClick={() => openModal()}>Create new task</button>
         <button className="mt-4 bg-gray-200 text-gray-800 py-2 rounded-lg">Download the app</button>
       </aside>
 
@@ -110,7 +149,6 @@ const KanbanBoard: React.FC = () => {
           <div className="flex space-x-4">
             <button className="bg-gray-200 p-2 rounded-md">Help & feedback</button>
             <button className="bg-gray-200 rounded-md p-1 text-sm" onClick={handleLogout}>Logout</button>
-
           </div>
         </header>
 
@@ -133,7 +171,7 @@ const KanbanBoard: React.FC = () => {
           {['todo', 'inProgress', 'underReview', 'finished'].map(status => (
             <div key={status} className="bg-white p-4 rounded-lg shadow-md">
               <h2 className="font-semibold text-xl mb-4 capitalize">{status.replace(/([A-Z])/g, ' $1')}</h2>
-              {tasks[status]?.map((task: any) => (
+              {groupedTasks[status]?.map((task: any) => (
                 <TaskCard key={task._id} {...task} onEdit={() => openModal(task)} />
               ))}
               <button
