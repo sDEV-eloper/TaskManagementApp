@@ -6,55 +6,13 @@ import { useDispatch } from 'react-redux';
 import axios from 'axios';
 
 const KanbanBoard: React.FC = () => {
-
-
-  //   {
-  //     _id: '1',
-  //     title: 'Task 1',
-  //     description: 'Description for Task 1 ajldfk aslkd;fj a;lsdkjf ;lasd f',
-  //     status: 'todo',
-  //     priority: 'Urgent',
-  //     deadline: '2024-08-01'
-  //   },
-  //   {
-  //     _id: '1.1',
-  //     title: 'Task 1.1',
-  //     description: 'Description for Task 1.1 ajldfk aslkd;fj a;lsdkjf ;lasd f',
-  //     status: 'todo',
-  //     priority: 'Medium',
-  //     deadline: '2024-08-01'
-  //   },
-  //   {
-  //     _id: '2',
-  //     title: 'Task 2',
-  //     description: 'Description for Task 2',
-  //     status: 'inProgress',
-  //     priority: 'Medium',
-  //     deadline: '2024-08-02'
-  //   },
-  //   {
-  //     _id: '3',
-  //     title: 'Task 3',
-  //     description: 'Description for Task 3',
-  //     status: 'underReview',
-  //     priority: 'Low',
-  //     deadline: '2024-08-03'
-  //   },
-  //   {
-  //     _id: '4',
-  //     title: 'Task 4',
-  //     description: 'Description for Task 4',
-  //     status: 'finished',
-  //     priority: 'Low',
-  //     deadline: '2024-08-03'
-  //   }
-  // ]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentTask, setCurrentTask] = useState<any | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const email = localStorage.getItem('email');
   const dispatch = useDispatch();
-const [tasks, setTasks]=useState<any[]>([])
+  const [tasks, setTasks] = useState<any[]>([]);
+
   const fetchTasks = async () => {
     const token = localStorage.getItem('token'); 
 
@@ -76,7 +34,6 @@ const [tasks, setTasks]=useState<any[]>([])
     fetchTasks();
   }, []);
 
-
   const openModal = (task?: any) => {
     setCurrentTask(task || null);
     setIsEditing(!!task);
@@ -90,13 +47,42 @@ const [tasks, setTasks]=useState<any[]>([])
   };
 
   const handleTaskUpdate = async (task: any) => {
+    const token = localStorage.getItem('token');
     try {
-      // Handle task update logic here
-      console.log('Task updated:', task);
+      if (isEditing) {
+        // Update task
+        await axios.put(`http://localhost:3001/api/tasks/${currentTask._id}`, task, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setTasks(tasks.map(t => (t._id === currentTask._id ? task : t)));
+      } else {
+        // Add new task
+        const response = await axios.post('http://localhost:3001/api/tasks', task, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setTasks([...tasks, response.data]);
+      }
       closeModal();
-      // Update the tasks state with the new or updated task
     } catch (error) {
       console.error('Error updating task:', error);
+    }
+  };
+
+  const handleTaskDelete = async (taskId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      await axios.delete(`http://localhost:3001/api/tasks/${taskId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setTasks(tasks.filter(t => t._id !== taskId));
+    } catch (error) {
+      console.error('Error deleting task:', error);
     }
   };
 
@@ -172,7 +158,7 @@ const [tasks, setTasks]=useState<any[]>([])
             <div key={status} className="bg-white p-4 rounded-lg shadow-md">
               <h2 className="font-semibold text-xl mb-4 capitalize">{status.replace(/([A-Z])/g, ' $1')}</h2>
               {groupedTasks[status]?.map((task: any) => (
-                <TaskCard key={task._id} {...task} onEdit={() => openModal(task)} />
+                <TaskCard key={task._id} {...task} onEdit={() => openModal(task)} onDelete={() => handleTaskDelete(task._id)} />
               ))}
               <button
                 onClick={() => openModal()}

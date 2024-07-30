@@ -1,42 +1,32 @@
 import React from 'react';
 
 interface TaskCardProps {
+  _id: string;
   title: string;
   description: string;
-  priority: 'Low' | 'Medium' | 'Urgent';
+  status: string;
+  priority: string;
   deadline: string;
-  hourAgo: string;
   onEdit: () => void;
+  onDelete: () => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ title, description, priority, deadline, onEdit }) => {
-  const priorityColors = {
-    Low: 'bg-green-100 text-green-800',
-    Medium: 'bg-yellow-100 text-yellow-800',
-    Urgent: 'bg-red-100 text-red-800',
-  };
-
+const TaskCard: React.FC<TaskCardProps> = ({ _id, title, description, status, priority, deadline, onEdit, onDelete }) => {
   return (
     <div className="bg-white p-4 rounded-lg shadow-md mb-4">
-      <h3 className="font-semibold text-lg mb-2">{title}</h3>
-      <p className="text-sm mb-2">{description}</p>
-      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${priorityColors[priority]}`}>
-        {priority}
-      </span>
-      <div className="text-sm text-gray-600 mt-2">
-        <p>
-          <i className="far fa-calendar-alt"></i> {deadline}
-        </p>
-        <p className="mt-1">
-          <i className="far fa-clock"></i> 2 hourAgo
-        </p>
+      <h3 className="text-xl font-semibold mb-2">{title}</h3>
+      <p className="text-gray-700 mb-2">{description}</p>
+      <div className="flex justify-between items-center">
+        <div className="text-sm">
+          <p>Status: <span className="font-semibold">{status}</span></p>
+          <p>Priority: <span className="font-semibold">{priority}</span></p>
+          <p>Deadline: <span className="font-semibold">{new Date(deadline).toLocaleDateString()}</span></p>
+        </div>
+        <div className="flex space-x-2">
+          <button onClick={onEdit} className="bg-blue-500 text-white py-1 px-3 rounded-lg">Edit</button>
+          <button onClick={onDelete} className="bg-red-500 text-white py-1 px-3 rounded-lg">Delete</button>
+        </div>
       </div>
-      <button
-        onClick={onEdit}
-        className="mt-2 bg-blue-500 text-white px-4 py-1 rounded-lg"
-      >
-        Edit
-      </button>
     </div>
   );
 };

@@ -33,8 +33,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit, task, 
       status,
       priority,
       deadline,
-      // Replace with actual user ID if required
-      user: 'someUserId',
     };
     onSubmit(newTask);
   };
@@ -42,83 +40,71 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit, task, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">{isEditing ? 'Edit Task' : 'Add Task'}</h2>
-          <button onClick={onClose} className="text-gray-600 hover:text-gray-900">
-            &times;
-          </button>
-        </div>
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white p-4 rounded-lg w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-4">{isEditing ? 'Edit Task' : 'Add Task'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Title</label>
+            <label className="block text-gray-700">Title</label>
             <input
               type="text"
+              className="w-full border border-gray-300 p-2 rounded-lg"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              required
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Status</label>
+            <label className="block text-gray-700">Description</label>
+            <textarea
+              className="w-full border border-gray-300 p-2 rounded-lg"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Status</label>
             <select
+              className="w-full border border-gray-300 p-2 rounded-lg"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              required
             >
-              <option value="todo">To do</option>
-              <option value="inProgress">In progress</option>
-              <option value="underReview">Under review</option>
+              <option value="todo">To Do</option>
+              <option value="inProgress">In Progress</option>
+              <option value="underReview">Under Review</option>
               <option value="finished">Finished</option>
             </select>
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Priority</label>
+            <label className="block text-gray-700">Priority</label>
             <select
+              className="w-full border border-gray-300 p-2 rounded-lg"
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              required
             >
               <option value="Low">Low</option>
               <option value="Medium">Medium</option>
-              <option value="Urgent">Urgent</option>
+              <option value="High">High</option>
             </select>
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Deadline</label>
+            <label className="block text-gray-700">Deadline</label>
             <input
               type="date"
+              className="w-full border border-gray-300 p-2 rounded-lg"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              rows={3}
-            ></textarea>
           </div>
           <div className="flex justify-end">
             <button
               type="button"
+              className="mr-2 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg"
               onClick={onClose}
-              className="bg-gray-600 text-white rounded-md px-4 py-2 mr-2"
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              className="bg-blue-600 text-white rounded-md px-4 py-2"
-            >
-              {isEditing ? 'Update' : 'Add'} Task
+            <button type="submit" className="bg-blue-600 text-white py-2 px-4 rounded-lg">
+              {isEditing ? 'Save Changes' : 'Add Task'}
             </button>
           </div>
         </form>
