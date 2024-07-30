@@ -1,17 +1,40 @@
-"use client"
+'use client'
 
-import React from 'react';
-import Board from './components/Board';
-import KanbanBoard from './components/KanbanBoard';
+import { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { checkAuth, logout } from '@/redux/slices/authSlice';
+import { RootState } from '@/redux/store';
 
+const Home = () => {
+  const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
+  const dispatch = useDispatch();
+  const router = useRouter();
 
+  useEffect(() => {
+    dispatch(checkAuth());
+  }, [dispatch]);
 
-const HomePage: React.FC = () => {
+  useEffect(() => {
+    if (!isLoggedIn) {
+      router.push('/login');
+    }
+  }, [isLoggedIn, router]);
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
+
+  if (!isLoggedIn) {
+    return null;
+  }
+
   return (
     <div>
-   <KanbanBoard/>
+      <h1>Home Page</h1>
+      <button onClick={handleLogout}>Logout</button>
     </div>
   );
 };
 
-export default HomePage;
+export default Home;
