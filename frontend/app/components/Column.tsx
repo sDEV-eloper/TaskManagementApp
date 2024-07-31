@@ -2,11 +2,11 @@
 
 import React from 'react';
 import TaskCard from './TaskCard';
-import  Task  from '../../redux/slices/boardSlice';
+import  {Task}  from '../../redux/slices/boardSlice';
 
 interface ColumnProps {
   title: string;
-  tasks: Task[];
+  tasks: Task [];
 }
 
 const Column: React.FC<ColumnProps> = ({ title, tasks }) => {
