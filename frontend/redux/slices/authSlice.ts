@@ -1,50 +1,55 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AppThunk } from '../store';
-import axiosInstance from '../../utils/axiosInstance';
 
 interface AuthState {
-  isAuthenticated: boolean;
+  isLoggedIn: boolean;
   token: string | null;
+  email: string | null;
 }
 
 const initialState: AuthState = {
-  isAuthenticated: false,
+  isLoggedIn: false,
   token: null,
+  email: null,
 };
+
+interface AuthPayload {
+  token: string;
+  email: string;
+}
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    loginSuccess(state, action: PayloadAction<string>) {
-      state.isAuthenticated = true;
-      state.token = action.payload;
+    login(state, action: PayloadAction<AuthPayload>) {
+      state.isLoggedIn = true;
+      state.token = action.payload.token;
+      state.email = action.payload.email;
+      localStorage.setItem('token', action.payload.token);
+      localStorage.setItem('email', action.payload.email);
     },
     logout(state) {
-      state.isAuthenticated = false;
+      state.isLoggedIn = false;
       state.token = null;
+      state.email = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('email');
+    },
+    checkAuth(state) {
+      const token = localStorage.getItem('token');
+      const email = localStorage.getItem('email');
+      if (token && email) {
+        state.isLoggedIn = true;
+        state.token = token;
+        state.email = email;
+      } else {
+        state.isLoggedIn = false;
+        state.token = null;
+        state.email = null;
+      }
     },
   },
 });
 
-export const { loginSuccess, logout } = authSlice.actions;
-
-export const login = (email: string, password: string): AppThunk => async (dispatch) => {
-  try {
-    const response = await axiosInstance.post('/auth/login', { email, password });
-    dispatch(loginSuccess(response.data.token));
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-export const signup = (email: string, password: string): AppThunk => async (dispatch) => {
-  try {
-    await axiosInstance.post('/auth/signup', { email, password });
-    dispatch(login(email, password));
-  } catch (error) {
-    console.error(error);
-  }
-};
-
+export const { login, logout, checkAuth } = authSlice.actions;
 export default authSlice.reducer;

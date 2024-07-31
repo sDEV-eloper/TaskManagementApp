@@ -1,112 +1,235 @@
-import React, { useState } from 'react';
-import TaskCard from './TaskCard';
-import TaskModal from './TaskModal';
+import React, { useState, useEffect } from "react";
+import TaskCard from "./TaskCard";
+import TaskModal from "./TaskModal";
+import { logout } from "@/redux/slices/authSlice";
+import { useDispatch } from "react-redux";
+import axios from "axios";
+import { IoIosAdd } from "react-icons/io";
 
 const KanbanBoard: React.FC = () => {
   const [isModalOpen, setModalOpen] = useState(false);
+  const [currentTask, setCurrentTask] = useState<any | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const email = localStorage.getItem("email");
+  const dispatch = useDispatch();
+  const [tasks, setTasks] = useState<any[]>([]);
 
-  const openModal = () => setModalOpen(true);
-  const closeModal = () => setModalOpen(false);
+  const fetchTasks = async () => {
+    const token = localStorage.getItem("token");
 
-  const tasks = {
-    todo: [
-      {
-        title: 'Implement User Authentication',
-        priority: 'Urgent',
-        dueDate: '2024-08-15',
-        createdDate: '2024-07-29',
-        timeAgo: '1 hr ago',
-      },
-    ],
-    inProgress: [
-      {
-        title: 'Design Home Page UI',
-        priority: 'Medium',
-        dueDate: '2024-08-15',
-        createdDate: '2024-07-29',
-        timeAgo: '1 hr ago',
-      },
-      {
-        title: 'Conduct User Feedback Survey',
-        priority: 'Low',
-        dueDate: '2024-08-05',
-        createdDate: '2024-07-29',
-        timeAgo: '3 hr ago',
-      },
-    ],
-    underReview: [
-      {
-        title: 'Integrate Cloud Storage',
-        priority: 'Urgent',
-        dueDate: '2024-08-20',
-        createdDate: '2024-07-27',
-        timeAgo: '2 days ago',
-      },
-    ],
-    finished: [
-      {
-        title: 'Test Cross-browser Compatibility',
-        priority: 'Medium',
-        dueDate: '2024-07-30',
-        createdDate: '2024-07-25',
-        timeAgo: '4 days ago',
-      },
-    ],
+    await axios
+      .get("http://localhost:3001/api/tasks", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        console.log(response.data);
+        setTasks(response.data);
+      })
+      .catch((error) => {
+        console.log("Axios Err: ", error);
+      });
   };
 
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const openModal = (task?: any) => {
+    setCurrentTask(task || null);
+    setIsEditing(!!task);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setCurrentTask(null);
+    setIsEditing(false);
+  };
+
+  const handleTaskUpdate = async (task: any) => {
+    const token = localStorage.getItem("token");
+    try {
+      if (isEditing) {
+        // Update task
+        await axios.put(
+          `http://localhost:3001/api/tasks/${currentTask._id}`,
+          task,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setTasks(tasks.map((t) => (t._id === currentTask._id ? task : t)));
+      } else {
+        // Add new task
+        const response = await axios.post(
+          "http://localhost:3001/api/tasks",
+          task,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setTasks([...tasks, response.data]);
+      }
+      closeModal();
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
+  };
+
+  const handleTaskDelete = async (taskId: string) => {
+    const token = localStorage.getItem("token");
+    try {
+      await axios.delete(`http://localhost:3001/api/tasks/${taskId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setTasks(tasks.filter((t) => t._id !== taskId));
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
+
+  const groupedTasks = tasks.reduce((acc: any, task: any) => {
+    acc[task.status] = [...(acc[task.status] || []), task];
+    return acc;
+  }, {});
+
   return (
-    <div className="flex justify-center p-4 bg-gray-100 min-h-screen">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-7xl w-full">
-        <div className="bg-gray-200 p-4 rounded-lg">
-          <h2 className="font-semibold text-xl mb-4">To do</h2>
-          {tasks.todo.map((task, index) => (
-            <TaskCard key={index} {...task} />
-          ))}
-          <button
-            onClick={openModal}
-            className="bg-black text-white rounded-lg w-full py-2 mt-4"
-          >
-            Add new
-          </button>
+    <div className="flex min-h-screen bg-gray-100">
+      <aside className="w-1/4 bg-white shadow-md p-4 flex flex-col">
+        <div className="flex items-center mb-6">
+          <div className="rounded-full bg-gray-200 h-10 w-10 flex items-center justify-center mr-2">
+            <span className="text-gray-600">DV</span>
+          </div>
+          <div>
+            <p className="text-gray-800 font-semibold">{email}</p>
+          </div>
         </div>
-        <div className="bg-gray-200 p-4 rounded-lg">
-          <h2 className="font-semibold text-xl mb-4">In progress</h2>
-          {tasks.inProgress.map((task, index) => (
-            <TaskCard key={index} {...task} />
-          ))}
-          <button
-            onClick={openModal}
-            className="bg-black text-white rounded-lg w-full py-2 mt-4"
-          >
-            Add new
-          </button>
+        <nav className="flex-grow">
+          <ul>
+            <li className="mb-2">
+              <a href="#" className="text-gray-800 hover:text-blue-600">
+                Home
+              </a>
+            </li>
+            <li className="mb-2">
+              <a href="#" className="text-gray-800 hover:text-blue-600">
+                Boards
+              </a>
+            </li>
+            <li className="mb-2">
+              <a href="#" className="text-gray-800 hover:text-blue-600">
+                Settings
+              </a>
+            </li>
+            <li className="mb-2">
+              <a href="#" className="text-gray-800 hover:text-blue-600">
+                Teams
+              </a>
+            </li>
+            <li className="mb-2">
+              <a href="#" className="text-gray-800 hover:text-blue-600">
+                Analytics
+              </a>
+            </li>
+            <button
+          className="mt-auto bg-purple-600 text-white py-2 px-2 w-full rounded-lg"
+          onClick={() => openModal()}
+        >
+          Create new task
+        </button>
+          </ul>
+        </nav>
+        
+        
+      </aside>
+
+      <main className="flex-grow p-4">
+        <header className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Good morning, Dev!</h1>
+          <div className="flex space-x-4">
+            <button className="bg-gray-200 p-2 rounded-md">
+              Help & feedback
+            </button>
+            <button
+              className="bg-gray-200 rounded-md p-1 text-sm"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <div className="mb-6 flex justify-between">
+          <div className="bg-white p-4 rounded-lg shadow-md flex-1 mr-4">
+            <h2 className="font-semibold mb-2">Introducing tags</h2>
+            <p className="text-sm">
+              Easily categorize and find your notes by adding tags. Keep your
+              workspace clutter-free and efficient.
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-md flex-1 mr-4">
+            <h2 className="font-semibold mb-2">Share Notes Instantly</h2>
+            <p className="text-sm">
+              Effortlessly share your notes with others via email or link.
+              Enhance collaboration with quick sharing options.
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-md flex-1">
+            <h2 className="font-semibold mb-2">Access Anywhere</h2>
+            <p className="text-sm">
+              Sync your notes across all devices, stay productive whether
+              you&apos;re on your phone, tablet, or computer.
+            </p>
+          </div>
         </div>
-        <div className="bg-gray-200 p-4 rounded-lg">
-          <h2 className="font-semibold text-xl mb-4">Under review</h2>
-          {tasks.underReview.map((task, index) => (
-            <TaskCard key={index} {...task} />
-          ))}
-          <button
-            onClick={openModal}
-            className="bg-black text-white rounded-lg w-full py-2 mt-4"
-          >
-            Add new
-          </button>
+
+        <div className="border bg-white p-2 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {["todo", "inProgress", "underReview", "finished"].map((status) => (
+              <div key={status} className="bg-white  rounded-lg ">
+                <h2 className="font-semibold text-lg mb-4 capitalize">
+                  {status.replace(/([A-Z])/g, " $1")}
+                </h2>
+                {groupedTasks[status]?.map((task: any) => (
+                  <TaskCard
+                    key={task._id}
+                    {...task}
+                    onEdit={() => openModal(task)}
+                    onDelete={() => handleTaskDelete(task._id)}
+                  />
+                ))}
+                <button
+                  onClick={() => openModal()}
+                  className="bg-black text-gray-300 rounded-lg w-full py-2 mt-4 flex justify-between px-4 items-center"
+                >
+                  Add new
+                <span><IoIosAdd size={20}/></span>
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="bg-gray-200 p-4 rounded-lg">
-          <h2 className="font-semibold text-xl mb-4">Finished</h2>
-          {tasks.finished.map((task, index) => (
-            <TaskCard key={index} {...task} />
-          ))}
-          <button
-            onClick={openModal}
-            className="bg-black text-white rounded-lg w-full py-2 mt-4"
-          >
-            Add new
-          </button>
-        </div>
-      </div>
-      <TaskModal isOpen={isModalOpen} onClose={closeModal} />
+      </main>
+
+      <TaskModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onSubmit={handleTaskUpdate}
+        task={currentTask}
+        isEditing={isEditing}
+      />
     </div>
   );
 };
